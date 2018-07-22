@@ -105,8 +105,6 @@ function insert_meta_tags_frontend() {
     $keywords = get_post_meta( $post_id, '_keywords', true);
     $canonical_url = get_post_meta( $post_id, '_canonical_url', true);
   }
-  /* TODO metatags in search page result */
-  /* TODO metatags in recent posts view */
   if(!is_search() && !is_home()) {
     echo '<meta name="description" content="' . $meta_description . '">' . "\n";
     echo '<meta name="keywords" content="' . $keywords . '">' . "\n";
@@ -116,8 +114,104 @@ function insert_meta_tags_frontend() {
       echo '<link rel="canonical" href="' . $canonical_url . '"/>' . "\n";
     }
   }
+  if(is_home()) {
+    echo '<meta name="description" content="' . get_option('recent_post_meta_description') . '">' . "\n";
+    echo '<meta name="keywords" content="' . get_option('recent_post_keywords') . '">' . "\n";
+    $canonical_url = get_option('recent_post_canonical_url');
+    if(isset($canonical_url) && !empty($canonical_url)) {
+      remove_action('wp_head', 'rel_canonical');
+      remove_action('embed_head', 'rel_canonical');
+      echo '<link rel="canonical" href="' . $canonical_url . '"/>' . "\n";
+    }
+  }
+  if(is_search()) {
+    echo '<meta name="description" content="' . get_option('search_page_meta_description') . '">' . "\n";
+    echo '<meta name="keywords" content="' . get_option('search_page_keywords') . '">' . "\n";
+    $canonical_url = get_option('search_page_canonical_url');
+    if(isset($canonical_url) && !empty($canonical_url)) {
+      remove_action('wp_head', 'rel_canonical');
+      remove_action('embed_head', 'rel_canonical');
+      echo '<link rel="canonical" href="' . $canonical_url . '"/>' . "\n";
+    }
+  }
 }
 
 add_action( 'wp_head', 'insert_meta_tags_frontend', 1);
+
+function menu_position_simple_seo() {
+	add_options_page( 'Simple SEO Options', 'Simple SEO', 'manage_options', 'mssimpleseo', 'simple_seo_settings' );
+  add_action( 'admin_init', 'register_simple_seo_settings' );
+}
+
+add_action( 'admin_menu', 'menu_position_simple_seo' );
+
+function simple_seo_settings() {
+	if ( !current_user_can( 'manage_options' ) )  {
+		wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
+	}
+	echo '<div class="wrap">';
+	echo '<h2>Simple SEO settings</h2>';
+	echo '</div>';
+  ?>
+  <form method="post" action="options.php" id="simple_seo-settings">
+    <?php settings_fields( 'simple-seo-settings' ); ?>
+    <?php do_settings_sections( 'simple-seo-settings' ); ?>
+    <p>Recent post page: </p>
+    <table class="form-table">
+        <tr valign="top">
+        <th scope="row">meta description: </th>
+        <td>
+          <textarea name="recent_post_meta_description" rows="4" cols="35" form="simple_seo-settings"><?php echo esc_attr( get_option('recent_post_meta_description') ); ?></textarea>
+        </td>
+        </tr>
+
+        <tr valign="top">
+        <th scope="row">keywords: </th>
+        <td><input type="text" name="recent_post_keywords" value="<?php echo esc_attr( get_option('recent_post_keywords') ); ?>" /></td>
+        </tr>
+
+        <tr valign="top">
+        <th scope="row">canonical URL: </th>
+        <td><input type="text" name="recent_post_canonical_url" value="<?php echo esc_attr( get_option('recent_post_canonical_url') ); ?>" /></td>
+        </tr>
+    </table>
+    <p>Search page result: </p>
+    <table class="form-table">
+        <tr valign="top">
+        <th scope="row">meta description: </th>
+        <td>
+          <textarea name="search_page_meta_description" rows="4" cols="35" form="simple_seo-settings"><?php echo esc_attr( get_option('search_page_meta_description') ); ?></textarea>
+        </td>
+        </tr>
+
+        <tr valign="top">
+        <th scope="row">keywords: </th>
+        <td><input type="text" name="search_page_keywords" value="<?php echo esc_attr( get_option('search_page_keywords') ); ?>" /></td>
+        </tr>
+
+        <tr valign="top">
+        <th scope="row">canonical URL: </th>
+        <td><input type="text" name="search_page_canonical_url" value="<?php echo esc_attr( get_option('search_page_canonical_url') ); ?>" /></td>
+        </tr>
+    </table>
+
+    <?php submit_button(); ?>
+
+</form> <?php
+
+}
+
+function register_simple_seo_settings() {
+	//register our settings
+	register_setting( 'simple-seo-settings', 'recent_post_meta_description' );
+	register_setting( 'simple-seo-settings', 'recent_post_keywords' );
+	register_setting( 'simple-seo-settings', 'recent_post_canonical_url' );
+  register_setting( 'simple-seo-settings', 'search_page_meta_description' );
+	register_setting( 'simple-seo-settings', 'search_page_keywords' );
+	register_setting( 'simple-seo-settings', 'search_page_canonical_url' );
+}
+
+
+
 
  ?>
