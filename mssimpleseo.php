@@ -20,12 +20,15 @@ function insert_seo_fields_in_post_edit_screen() {
     $keywords = get_post_meta( $post->ID, '_keywords', true);
     $canonical_url = get_post_meta( $post->ID, '_canonical_url', true);
     $metadescription = get_post_meta( $post->ID, '_metadescription', true);
+    $title = get_post_meta( $post->ID, '_mstitle', true);
     echo 'meta description: ';
     ?>
     <textarea name="metadescription" rows="4" cols="35" form="post"><?php echo esc_attr( $metadescription ); ?></textarea>
     <?php echo '<br />keywords: ' ?>
     <input type="text" name="keywords" value="<?php echo esc_attr( $keywords ); ?>" />
-    <?php echo 'canonical URL: ' ?>
+    <?php echo '<br />title: ' ?>
+    <input type="text" name="mstitle" value="<?php echo esc_attr( $title ); ?>" />
+    <?php echo '<br />canonical URL: ' ?>
     <input type="text" name="canonical_url" value="<?php echo esc_attr( $canonical_url ); ?>" />
     <?php
   }
@@ -39,6 +42,7 @@ function save_seo_fields($post_ID ) {
     update_post_meta( $post_ID, '_keywords', strip_tags( $_POST['keywords'] ) );
     update_post_meta( $post_ID, '_canonical_url', strip_tags( $_POST['canonical_url'] ) );
     update_post_meta( $post_ID, '_metadescription', strip_tags( $_POST['metadescription'] ) );
+    update_post_meta( $post_ID, '_mstitle', strip_tags( $_POST['mstitle'] ) );
   }
 }
 
@@ -78,6 +82,12 @@ function category_seo_fields( $tag ) {
       <th scope="row" valign="top"><label for="keywords"><?php _e('keywords: '); ?></label></th>
       <td>
         <input type="text" name="Cat_meta[keywords]" id="Cat_meta[keywords]" size="25" style="width:60%;" value="<?php echo $cat_meta['keywords'] ? $cat_meta['keywords'] : ''; ?>"><br />
+      </td>
+    </tr>
+    <tr class="form-field">
+      <th scope="row" valign="top"><label for="mstitle"><?php _e('title: '); ?></label></th>
+      <td>
+        <input type="text" name="Cat_meta[mstitle]" id="Cat_meta[mstitle]" size="25" style="width:60%;" value="<?php echo $cat_meta['mstitle'] ? $cat_meta['mstitle'] : ''; ?>"><br />
       </td>
     </tr>
     <tr class="form-field">
@@ -136,6 +146,38 @@ function insert_meta_tags_frontend() {
   }
 }
 
+function generate_custom_title($title) {
+  global $post;
+  if (is_category()) {
+    $cat_id = get_query_var('cat');
+    $cat_data = get_option("category_$cat_id");
+    $mstitle = $cat_data['mstitle'];
+  } else {
+    $post_id = $post->ID;
+    $mstitle = get_post_meta( $post_id, '_mstitle', true);
+  }
+  if(!is_search() && !is_home()) {
+    if(isset($mstitle) && !empty($mstitle)) {
+      return $mstitle;
+    }
+  }
+  if(is_home()) {
+    $mstitle = get_option('recent_post_title');
+    if(isset($mstitle) && !empty($mstitle)) {
+      return $mstitle;
+    }
+  }
+  if(is_search()) {
+    $mstitle = get_option('search_page_title');
+    if(isset($mstitle) && !empty($mstitle)) {
+      return $mstitle;
+    }
+  }
+  return $title;
+
+}
+add_filter( 'pre_get_document_title', 'generate_custom_title', 10 );
+
 add_action( 'wp_head', 'insert_meta_tags_frontend', 1);
 
 function menu_position_simple_seo() {
@@ -171,6 +213,11 @@ function simple_seo_settings() {
         </tr>
 
         <tr valign="top">
+        <th scope="row">title: </th>
+        <td><input type="text" name="recent_post_title" value="<?php echo esc_attr( get_option('recent_post_title') ); ?>" /></td>
+        </tr>
+
+        <tr valign="top">
         <th scope="row">canonical URL: </th>
         <td><input type="text" name="recent_post_canonical_url" value="<?php echo esc_attr( get_option('recent_post_canonical_url') ); ?>" /></td>
         </tr>
@@ -190,6 +237,11 @@ function simple_seo_settings() {
         </tr>
 
         <tr valign="top">
+        <th scope="row">title: </th>
+        <td><input type="text" name="search_page_title" value="<?php echo esc_attr( get_option('search_page_title') ); ?>" /></td>
+        </tr>
+
+        <tr valign="top">
         <th scope="row">canonical URL: </th>
         <td><input type="text" name="search_page_canonical_url" value="<?php echo esc_attr( get_option('search_page_canonical_url') ); ?>" /></td>
         </tr>
@@ -206,9 +258,11 @@ function register_simple_seo_settings() {
 	register_setting( 'simple-seo-settings', 'recent_post_meta_description' );
 	register_setting( 'simple-seo-settings', 'recent_post_keywords' );
 	register_setting( 'simple-seo-settings', 'recent_post_canonical_url' );
+  register_setting( 'simple-seo-settings', 'recent_post_title' );
   register_setting( 'simple-seo-settings', 'search_page_meta_description' );
 	register_setting( 'simple-seo-settings', 'search_page_keywords' );
 	register_setting( 'simple-seo-settings', 'search_page_canonical_url' );
+  register_setting( 'simple-seo-settings', 'search_page_title' );
 }
 
 
